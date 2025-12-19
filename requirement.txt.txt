@@ -2,6 +2,4 @@ streamlit
 langchain
 langchain-community
 sentence-transformers
-transformers
 faiss-cpu
-torch

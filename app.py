@@ -1,5 +1,4 @@
 import os
-from langchain_core.documents import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
@@ -10,25 +9,28 @@ def load_documents(data_dir="data"):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     data_path = os.path.join(base_dir, data_dir)
 
-    documents = []
+    texts = []
+
+    if not os.path.exists(data_path):
+        raise FileNotFoundError(f"Data folder not found: {data_path}")
 
     for file in os.listdir(data_path):
         if file.endswith(".txt"):
             with open(os.path.join(data_path, file), "r", encoding="utf-8") as f:
-                text = f.read().strip()
-                if text:
-                    documents.append(Document(page_content=text))
+                content = f.read().strip()
+                if content:
+                    texts.append(content)
 
-    return documents
+    return texts
 
 
 # ---------- BUILD VECTOR STORE ----------
-def build_vectorstore(documents):
+def build_vectorstore(texts):
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=800,
         chunk_overlap=100
     )
-    chunks = splitter.split_documents(documents)
+    chunks = splitter.create_documents(texts)
 
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
@@ -38,14 +40,13 @@ def build_vectorstore(documents):
     return vectorstore
 
 
-# ---------- RAG PIPELINE (NO TRANSFORMERS) ----------
+# ---------- RAG PIPELINE (CLOUD SAFE) ----------
 def run_rag_pipeline(query, top_k=3):
-    documents = load_documents("data")
-    vectorstore = build_vectorstore(documents)
+    texts = load_documents("data")
+    vectorstore = build_vectorstore(texts)
 
     docs = vectorstore.similarity_search(query, k=top_k)
 
-    # Simple extractive answer
     answer = "\n\n".join([doc.page_content[:300] for doc in docs])
 
     return answer, docs

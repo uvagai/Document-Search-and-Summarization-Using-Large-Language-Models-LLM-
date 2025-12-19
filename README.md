@@ -1,91 +1,114 @@
-# Document-Search-and-Summarization-Using-Large-Language-Models-LLM-
-Document Search & Summarization using RAG
+**Document Search and Summarization System**
 
-A Retrieval-Augmented Generation (RAG) application built using LangChain, local transformer models, and Streamlit.
-The system retrieves relevant documents from a local knowledge base and generates concise summaries for user queries.
+An end-to-end Document Search and Summarization application built using Information Retrieval (IR) techniques, cosine similarity, and Streamlit.
+The system retrieves the most relevant documents for a user query and generates an extractive summary of the results.
+
+This project is designed to be lightweight, stable, and cloud-deployable, while still covering all core requirements of a Retrieval-Augmented workflow.
 
 **🚀 Project Overview**
 
-This project demonstrates an end-to-end RAG pipeline where:
+The goal of this project is to build a system that:
 
-Documents are loaded from local text files
+Loads and preprocesses a document corpus
 
-Text is embedded using SentenceTransformers
+Performs semantic-style document search
 
-Semantic search is performed using FAISS
+Retrieves the top-K most relevant documents
 
-Retrieved context is summarized using a local transformer model
+Generates a concise summary of the retrieved content
 
-The pipeline is exposed through an interactive Streamlit UI
+Provides a simple and interactive user interface
 
-✅ No OpenAI API
+Can be deployed on Streamlit Cloud without dependency issues
 
-✅ No paid services
+Due to cloud resource constraints, the system uses TF-IDF + cosine similarity as a reliable and explainable retrieval baseline.
 
-✅ Fully local & offline
-
-✅ Windows compatible
-
-
-**🧠 Architecture**
+🧠 System Architecture
 User Query
    ↓
-Retriever (FAISS + Embeddings)
+TF-IDF Vectorization
    ↓
-Relevant Documents
+Cosine Similarity
    ↓
-Local LLM (Summarization)
+Top-K Relevant Documents
    ↓
-Final Answer
+Extractive Summarization
+   ↓
+Streamlit UI Output
 
 **🛠️ Tech Stack**
 
 Python
 
-LangChain
+Streamlit – User Interface
 
-SentenceTransformers
+Scikit-learn – TF-IDF & cosine similarity
 
-FAISS
+NumPy – Numerical operations
 
-Hugging Face Transformers
+(No external APIs, no paid services)
 
-Streamlit
+**📁 Project Structure**
 
-📁** Project Structure**
-
-everquint_rag_project/
-
+document-search-project/
 │
-├── app.py        # Backend: RAG logic using LangChain
 
-├── rag_st.py     # Frontend: Streamlit UI
+├── app.py        # Backend logic (search + summarization)
 
-├── data/         # Knowledge base (text documents)
+├── rag_st.py     # Streamlit UI
+
+├── data/         # Document corpus (.txt files)
 
 │   ├── doc1.txt
-
 │   ├── doc2.txt
-
 │   └── doc3.txt
-
+├── requirements.txt
 └── README.md
 
-**⚙️ Installation & Setup**
+⚙️ How the System Works
+1️⃣ Data Preparation
 
-1️⃣ Clone the repository
-git clone https://github.com/your-username/your-repo-name.git
-cd everquint_rag_project
+Documents are loaded from the data/ directory
 
-2️⃣ Create a virtual environment (recommended)
-python -m venv venv
-venv\Scripts\activate
+Text is cleaned (lowercasing, trimming whitespace)
 
-3️⃣ Install dependencies
-pip install streamlit langchain langchain-community
-pip install sentence-transformers transformers faiss-cpu
+**2️⃣ Document Search**
 
-▶️ How to Run the Application
+TF-IDF is used to convert documents into vectors
+
+User query is vectorized using the same TF-IDF model
+
+Cosine similarity is computed between query and documents
+
+Top-K most relevant documents are selected
+
+**3️⃣ Summarization**
+
+Extractive summarization is applied
+
+The first N important sentences from retrieved documents are used
+
+Summary length is configurable from the UI
+
+**4️⃣ User Interface**
+
+Built using Streamlit
+
+Allows users to:
+
+Enter a query
+
+Choose number of documents (Top-K)
+
+Choose summary length
+
+Handles empty input and missing documents gracefully
+
+**▶️ How to Run the Application**
+1️⃣ Install dependencies
+pip install -r requirements.txt
+
+2️⃣ Run the app
 streamlit run rag_st.py
 
 
@@ -93,22 +116,22 @@ The app will open automatically in your browser.
 
 **✨ Features**
 
-🔍 Semantic document retrieval
+🔍 Semantic-style document search
 
-🧠 Context-aware summarization
+🧠 Extractive summarization
 
-⚡ Fast FAISS-based search
+🎛️ Adjustable Top-K retrieval
 
-🖥️ Simple and clean UI
+📏 Adjustable summary length
 
-📦 Modular backend-frontend design
+⚠️ Graceful handling of empty input and missing data
 
-📌 Example Use Cases
+☁️ Fully deployable on Streamlit Cloud
 
-Knowledge base search
+**📌 Evaluation Strategy**
 
-Document summarization
+Retrieval Evaluation:
+Accuracy@K by checking whether relevant documents appear in top-K results.
 
-Study notes generation
-
-Internal document Q&A
+Summarization Evaluation:
+Manual evaluation based on relevance, coverage, and coherence.

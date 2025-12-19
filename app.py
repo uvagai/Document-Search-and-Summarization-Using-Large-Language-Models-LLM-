@@ -1,7 +1,7 @@
 import os
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
+import faiss
+import numpy as np
+from sentence_transformers import SentenceTransformer
 
 
 # ---------- LOAD DOCUMENTS ----------
@@ -24,29 +24,27 @@ def load_documents(data_dir="data"):
     return texts
 
 
-# ---------- BUILD VECTOR STORE ----------
-def build_vectorstore(texts):
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=800,
-        chunk_overlap=100
-    )
-    chunks = splitter.create_documents(texts)
+# ---------- BUILD VECTOR INDEX ----------
+def build_faiss_index(texts):
+    model = SentenceTransformer("all-MiniLM-L6-v2")
+    embeddings = model.encode(texts)
 
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
+    dimension = embeddings.shape[1]
+    index = faiss.IndexFlatL2(dimension)
+    index.add(np.array(embeddings).astype("float32"))
 
-    vectorstore = FAISS.from_documents(chunks, embeddings)
-    return vectorstore
+    return index, model
 
 
-# ---------- RAG PIPELINE (CLOUD SAFE) ----------
+# ---------- RAG PIPELINE ----------
 def run_rag_pipeline(query, top_k=3):
     texts = load_documents("data")
-    vectorstore = build_vectorstore(texts)
+    index, model = build_faiss_index(texts)
 
-    docs = vectorstore.similarity_search(query, k=top_k)
+    query_embedding = model.encode([query]).astype("float32")
+    _, indices = index.search(query_embedding, top_k)
 
-    answer = "\n\n".join([doc.page_content[:300] for doc in docs])
+    results = [texts[i] for i in indices[0]]
+    answer = "\n\n".join(results)
 
-    return answer, docs
+    return answer, results

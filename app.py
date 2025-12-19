@@ -1,31 +1,23 @@
 import os
-from transformers import pipeline
-
 from langchain.schema import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain_community.llms import HuggingFacePipeline
-from langchain.chains import RetrievalQA
 
 
 # ---------- LOAD DOCUMENTS ----------
 def load_documents(data_dir="data"):
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    data_path = os.path.join(base_dir, data_dir)
+
     documents = []
 
-    if not os.path.exists(data_dir):
-        raise FileNotFoundError(f"Data folder not found: {data_dir}")
-
-    for file in os.listdir(data_dir):
+    for file in os.listdir(data_path):
         if file.endswith(".txt"):
-            path = os.path.join(data_dir, file)
-            with open(path, "r", encoding="utf-8") as f:
+            with open(os.path.join(data_path, file), "r", encoding="utf-8") as f:
                 text = f.read().strip()
                 if text:
                     documents.append(Document(page_content=text))
-
-    if not documents:
-        raise ValueError("No text files found in data folder")
 
     return documents
 
@@ -46,39 +38,14 @@ def build_vectorstore(documents):
     return vectorstore
 
 
-# ---------- BUILD LOCAL LLM ----------
-def build_llm():
-    summarizer = pipeline(
-        "summarization",
-        model="facebook/bart-large-cnn",
-        tokenizer="facebook/bart-large-cnn"
-    )
-
-    llm = HuggingFacePipeline(pipeline=summarizer)
-    return llm
-
-
-# ---------- BUILD RAG CHAIN ----------
-def build_rag_chain(vectorstore, top_k=3):
-    llm = build_llm()
-
-    qa_chain = RetrievalQA.from_chain_type(
-        llm=llm,
-        retriever=vectorstore.as_retriever(search_kwargs={"k": top_k}),
-        return_source_documents=True
-    )
-    return qa_chain
-
-
-# ---------- FULL RAG PIPELINE ----------
+# ---------- RAG PIPELINE (NO TRANSFORMERS) ----------
 def run_rag_pipeline(query, top_k=3):
     documents = load_documents("data")
     vectorstore = build_vectorstore(documents)
-    rag_chain = build_rag_chain(vectorstore, top_k)
 
-    response = rag_chain(query)
+    docs = vectorstore.similarity_search(query, k=top_k)
 
-    sources = response["source_documents"]
-    summary = response["result"]
+    # Simple extractive answer
+    answer = "\n\n".join([doc.page_content[:300] for doc in docs])
 
-    return summary, sources
+    return answer, docs
